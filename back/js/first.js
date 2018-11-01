@@ -1,107 +1,88 @@
-/**
- * Created by 54721 on 2018/11/1.
- */
 
 
-$(function() {
-  var currentPage = 1; // 当前页
-  var pageSize = 5; // 每页多少条
-
-
-  // 1. 发送ajax请求数据, 进行渲染
+$(function(){
+  // 1.请求数据渲染页面
+  var currentPage=1;
+  var pageSize=5;
   render();
-  function render() {
-    $.ajax({
-      type: "get",
-      url: "/category/queryTopCategoryPaging",
-      data: {
-        page: currentPage,
-        pageSize: pageSize
-      },
-      dataType: "json",
-      success: function( info ) {
-        console.log( info );
-        var htmlStr = template( "firstTpl", info );
-        $('tbody').html( htmlStr );
-
-        // 进行分页初始化
-        $('#paginator').bootstrapPaginator({
-          // 版本号
-          bootstrapMajorVersion: 3,
-          // 总页数
-          totalPages: Math.ceil( info.total / info.size ),
-          // 当前页
-          currentPage: info.page,
-          // 绑定页码点击事件
-          onPageClicked: function( a, b, c, page ) {
-            // 点击时, 显示 page 页的数据
-            // 更新当前页
-            currentPage = page;
-            render();
-          }
-        })
-      }
-    })
-  };
-
-
-
-  // 2. 点击添加按钮, 显示添加模态框
-  $('#addBtn').click(function() {
-    $('#addModal').modal("show");
-  });
-
-
-
-  // 3. 表单校验
-  $('#form').bootstrapValidator({
-    // 配置图标
-    feedbackIcons: {
-      valid: 'glyphicon glyphicon-ok',   // 校验成功
-      invalid: 'glyphicon glyphicon-remove',   // 校验失败
-      validating: 'glyphicon glyphicon-refresh'  // 校验中
+function render (){
+  $.ajax({
+    type:'GET',
+    url:'/category/queryTopCategoryPaging',
+    data:{
+      page:currentPage,
+      pageSize:pageSize
     },
+    dataType:'json',
+    success:function(info){
+      // console.log(info);
+      // 模板引擎进行渲染
+      var htmlStr=template('firstTmp',info);
+      $('tbody').html( htmlStr );
 
-    // 配置需要校验的字段
-    fields: {
-      categoryName: {
-        // 校验规则
-        validators: {
-          notEmpty: {
-            message: "请输入一级分类"
-          }
+      $('#paginator').bootstrapPaginator({
+        bootstrapMajorVersion :3,//版本
+        totalPages:Math.ceil(info.total/info.size),
+        currentPage:info.page,
+        onPageClicked:function(a,b,c,page){
+          
+          currentPage=page;
+          render();
         }
-      }
+      })
     }
   });
+}
+  
+  // 2.点击添加分类按钮，添加模态框
+  $('#btn-Add').click(function(){
+    $('#addModal').modal('show');
+  });
 
+  // 表单校验
+  $('#form').bootstrapValidator({
+    //2. 指定校验时的图标显示，默认是bootstrap风格
+  feedbackIcons: {
+    valid: 'glyphicon glyphicon-ok',
+    invalid: 'glyphicon glyphicon-remove',
+    validating: 'glyphicon glyphicon-refresh'
+  },
+  fields:{
+    categoryName:{
+      validators:{
+        notEmpty:{
+          message:'一级分类不能为空'
+        }
+      }
+      
+    }
+  },
+  })
+// 3校验成功时，进行向后台添加数据
+$('#form').on('success.form.bv',function(e){
+  e.preventDefault();
+   // 3.点击添加按钮，向后台添加数据
 
-
-  // 4. 注册表单校验成功事件, 阻止默认的提交, 通过 ajax 提交
-  $('#form').on("success.form.bv", function( e ) {
-    // 阻止默认的提交
-    e.preventDefault();
-
+  //  $('#addBtn').click(function(){
     $.ajax({
-      type: "post",
-      url: "/category/addTopCategory",
-      data: $('#form').serialize(),
-      dataType: "json",
-      success: function( info ) {
-        console.log( info );
-        // 关闭模态框
-        $('#addModal').modal("hide");
+      type:'POST',
+      url:'/category/addTopCategory',
+      data:$('#form').serialize(),
+      dataType:'json',
+      success:function( info ){
+        // console.log( info );
+        if(info.success) {
+           // 关闭模态框
+        // $('#addModal').modal("hide");
         // 页面重新渲染第1页
         currentPage = 1;
         render();
-
-        // 调用 resetForm 进行重置
-        // resetForm(true) 传 true 表示内容和校验状态都重置
-        $('#form').data("bootstrapValidator").resetForm( true );
+            // 4.重置表单
+  $('#form').data('bootstrapValidator').resetForm(true);
+        }
       }
-    })
-
+  // })
   })
-
-
-});
+ 
+})
+})
